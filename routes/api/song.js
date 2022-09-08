@@ -1,13 +1,13 @@
 
 const express = require('express');
 const router = express.Router();
-
+const songController = require('../../controllers/songController.js')
 
 router.route('/upload/')
-  .post((req, res) => {res.send("Upload asong")})
+  .post(songController.uploadSong)
 
 router.route('/:id')
-  .get((req, res) => {res.send('You have requested a song')})
+  .get(songController.selectSong)
 
 
 module.exports = router
