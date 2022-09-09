@@ -22,12 +22,15 @@ const createLike = async (req, res) =>
 
   // now we create the like object
   const like = Like.build({
-    userid: req.body.userid,
-    songid: req.body.songid 
+    userId: req.body.userid,
+    songId: req.body.songid 
   })
   await like.save()
 
+
   res.status(201).json({'success':'the like has been create'})
+  // const songLikes = await song.getLike()
+  // res.status(201).json({'success': songLikes})
 }
   
 
@@ -37,8 +40,14 @@ const deleteLike = async (req, res) =>
 
 }
 
+const getAllLikes = async (req, res) =>
+{
+  const Likes = await Like.findAll() 
+  res.status(201).json({'success': Likes})
+}
 
-module.exports = {createLike, deleteLike}
+
+module.exports = {createLike, deleteLike, getAllLikes}
 
 
 

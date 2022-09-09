@@ -8,6 +8,8 @@ const sequelize = require('./config/sequelize')
 const User = require('./models/User')
 const Song = require('./models/Song')
 const Like = require('./models/Like')
+const AddSong = require('./models/AddSong')
+const SongList = require('./models/SongList')
 const PORT = process.env.PORT || 3500;
 const initDB = async() => {
 try{
@@ -17,11 +19,20 @@ try{
   await User.sync({ force: true }); 
   await Like.sync({force:true});
   await Song.sync({force:true});
+  await AddSong.sync({force:true});
+  await SongList.sync({force:true});
   //creating relationships
+  // Like Song User Related
   User.hasMany(Like)
   Like.belongsTo(User)
   Song.hasMany(Like)
   Like.belongsTo(Song)
+  // Add Song Playlist related
+  Song.hasMany(AddSong)
+  AddSong.belongsTo(Song)
+  SongList.hasMany(AddSong)
+  AddSong.belongsTo(SongList)
+
 
 
 } 
