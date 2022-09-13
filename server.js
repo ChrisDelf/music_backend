@@ -32,6 +32,8 @@ try{
   AddSong.belongsTo(Song)
   SongList.hasMany(AddSong)
   AddSong.belongsTo(SongList)
+  User.hasMany(SongList)
+  SongList.belongsTo(User)
 
 
 
@@ -57,5 +59,6 @@ app.use('/playlist', require('./routes/api/playlist'))
 app.use('/song', require('./routes/api/song'))
 app.use('/user', require('./routes/user.js'))
 app.use('/like', require('./routes/api/like'))
+app.use('/addSong',require('./routes/api/addSong'))
 // app.use('/register', require('./routes/register_user'))
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

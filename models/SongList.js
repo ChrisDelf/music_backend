@@ -1,5 +1,4 @@
-
-const { Sequelize, DataTypes} = require('sequelize')
+const { Sequelize, DataTypes } = require('sequelize')
 const sequelize = require('../config/sequelize')
 const Song = require('./Song')
 
@@ -15,13 +14,19 @@ const SongList = sequelize.define('songList',
       type: DataTypes.STRING,
       allowNull: false
     },
+    userId:
+    {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
     isPrivate:
     {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false,
-      
+
     }
+    
   })
 
 

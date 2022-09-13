@@ -5,7 +5,7 @@ const User = require('../models/User')
 const createLike = async (req, res) =>
 {
   //in order to create a like we the song or songlist id and we need the user id
-  if(!req?.body?.songid) return res.status(400).json({'message':'Need song or a songlist id '})
+  if(!req?.body?.songid) return res.status(400).json({'message':'Need song or a song id '})
   if(!req?.body?.userid) return res.status(400).json({'message':'Need a user id'})
   // now we should check if both user and song exist in our database
   const user = await User.findOne({

@@ -13,7 +13,7 @@ const deleteUser = async (req, res) => {
   // now we need to grab the user from the database
   const user = await User.destroy({
     where: {
-      id: 1,
+      id: req.body.id,
     }
   })
   res.status(200).json(user.likes)

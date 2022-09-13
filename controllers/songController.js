@@ -1,5 +1,5 @@
 const Song = require('../models/Song')
-
+const downLoadSong = require('../scripts/downLoadSong.js')
 
 const uploadSong = async (req, res) =>
 {
@@ -12,7 +12,7 @@ const uploadSong = async (req, res) =>
     }
   )
   await newSong.save()
-
+  downLoadSong.downLoadSong(newSong.name)
   res.status(201).json({'success': newSong})
 
 }
