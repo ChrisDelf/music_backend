@@ -1,29 +1,28 @@
 const Song = require('../models/Song')
 const downLoadSong = require('../scripts/downLoadSong.js')
 
-const uploadSong = async (req, res) =>
-{
+const uploadSong = async (req, res) => {
   // deconstructing the resquest body
-  const {name} = req.body
+  const { name } = req.body
 
-  newSong = Song.build(
-    {
-      name: name,
-    }
-  )
-  await newSong.save()
-  downLoadSong.downLoadSong(newSong.name)
-  res.status(201).json({'success': newSong})
+
+  downLoadSong.downLoadSong(name)
+  res.status(201).json({ 'success': "song has been uploaded" })
 
 }
-const selectSong = async (req, res) =>
-{
+const selectSong = async (req, res) => {
   // checking if request is compatible
-  if (!req?.params?.id) return res.status(400).json({'message': 'Song ID is required'})
+  if (!req?.params?.id) return res.status(400).json({ 'message': 'Song ID is required' })
   // next we need to check if the song id is in our database
-  const song = await Song.findOne({id: req.params.id})
-  
+  const song = await Song.findOne({ id: req.params.id })
+
   res.json(song)
 }
 
-module.exports = {uploadSong, selectSong}
+const getAllSongs = async (req, res) => {
+  const Songs = await (Song.findAll())
+
+  res.status(201).json({ 'success': Songs })
+}
+
+module.exports = { uploadSong, selectSong, getAllSongs}

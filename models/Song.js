@@ -1,10 +1,15 @@
-const { Sequelize, DataTypes} = require('sequelize')
+const { Sequelize, DataTypes } = require('sequelize')
 const sequelize = require('../config/sequelize')
 
 
 const Song = sequelize.define('song',
   {
     name:
+    {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    fileName:
     {
       type: DataTypes.STRING,
       allowNull: false

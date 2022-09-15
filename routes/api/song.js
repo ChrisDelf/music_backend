@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const songController = require('../../controllers/songController.js')
 
+router.route('/')
+  .get(songController.getAllSongs)
 router.route('/upload/')
   .post(songController.uploadSong)
 
