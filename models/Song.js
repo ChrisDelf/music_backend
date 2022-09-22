@@ -13,6 +13,16 @@ const Song = sequelize.define('song',
     {
       type: DataTypes.STRING,
       allowNull: false
+    },
+      genre:
+    {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+      artist:
+    {
+      type: DataTypes.STRING,
+      allowNull: true
     }
 
   })
