@@ -27,6 +27,8 @@ try{
   Like.belongsTo(User)
   Song.hasMany(Like)
   Like.belongsTo(Song)
+  SongList.hasMany(Like)
+  Like.belongsTo(SongList)
   // Add Song Playlist related
   Song.hasMany(AddSong)
   AddSong.belongsTo(Song)
@@ -34,6 +36,8 @@ try{
   AddSong.belongsTo(SongList)
   User.hasMany(SongList)
   SongList.belongsTo(User)
+  // Like playlist relationship
+
 
 
 
