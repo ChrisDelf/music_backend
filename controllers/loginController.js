@@ -1,5 +1,5 @@
 const User = require('../models/User')
-
+const bcrypt = require('bcrypt');
 
 
 const handleLogin = async (req, res) => {
@@ -11,8 +11,10 @@ const handleLogin = async (req, res) => {
   // next we need to see if we can find the user
   const foundUser = await User.findOne({ username: username })
   if (!foundUser) return (res.status(400).json({ 'message': 'User was not found' }))
-
-  if (password == foundUser.password) {
+  
+  // comparing the passwords 
+  const match = await bcrypt.compare(password, foundUser.password)
+  if (match) {
     res.status(200).json(foundUser)
   }
   else {

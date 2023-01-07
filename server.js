@@ -11,6 +11,8 @@ const Like = require('./models/Like')
 const AddSong = require('./models/AddSong')
 const SongList = require('./models/SongList')
 const PORT = process.env.PORT || 3500;
+
+app.use(cors())
 const initDB = async() => {
 try{
 
