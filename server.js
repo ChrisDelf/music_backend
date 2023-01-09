@@ -10,9 +10,13 @@ const Song = require('./models/Song')
 const Like = require('./models/Like')
 const AddSong = require('./models/AddSong')
 const SongList = require('./models/SongList')
+const cookieParser = require('cookie-parser')
 const PORT = process.env.PORT || 3500;
 
 app.use(cors())
+
+
+
 const initDB = async() => {
 try{
 
@@ -52,11 +56,16 @@ catch (error)
 // <---------------------------------------->
 
 
-// connecting to the database
-initDB()
+
+
 // built-in middleware for json 
 app.use(express.json());
 
+// middleware for cookies 
+app.use(cookieParser())
+
+// connecting to the database
+initDB()
 // routes
 
 app.use('/auth', require('./routes/auth'))
@@ -66,5 +75,4 @@ app.use('/song', require('./routes/api/song'))
 app.use('/user', require('./routes/user.js'))
 app.use('/like', require('./routes/api/like'))
 app.use('/addSong',require('./routes/api/addSong'))
-// app.use('/register', require('./routes/register_user'))
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
