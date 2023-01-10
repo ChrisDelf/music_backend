@@ -43,7 +43,7 @@ const handleLogin = async (req, res) => {
     
     // next we will store the refreshToken as a cookie
     // its should be safe since javascript cannot access
-    res.cookie('jwt', refreshToken, {httpOnly: true, sameSight: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000});
+    res.cookie('jwt', refreshToken, {http: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000});
     // next we send the accessToken as json
     res.json({accessToken})
   }

@@ -21,7 +21,7 @@ const registerNewUser = async (req, res) =>
   
   await newUser.save();
  
-  res.status(201).json({'success': newUser}).send()
+  res.status(201).json({'success': newUser.username}).send()
  }
   catch(err)
   {

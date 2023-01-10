@@ -8,6 +8,7 @@ require('dotenv').config();
 const handleRefreshToken = async (req, res) =>
 {
   const cookies = req.cookies
+  console.log(cookies)
   // we are going to check if we have a cookie and then check
   // if the cookies has a jwt property
   if(!cookies?.jwt) return res.sendStatus(401)// 401 is unauthorized
