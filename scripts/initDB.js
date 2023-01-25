@@ -6,16 +6,20 @@ const SongList = require('../models/SongList')
 const Role = require('../models/Roles')
 const AddRole = require('../models/AddRole.js')
 
+
+const bcrypt = require('bcrypt');
 const createRole = require('../scripts/creatingRoles.js')
 const sequelize = require('../config/sequelize')
 
 require('dotenv').config();
 
-const create_admin = async () => {
+const create_admin = async (adminId) => {
+const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12)
+
 const admin_user = User.build(
   {
   username: "BigBoss",
-  password: process.env.ADMIN_PASSWORD,
+  password: hashedPassword,
   }
 )
  await admin_user.save()
@@ -64,11 +68,11 @@ try{
 
   // Like playlist relationship
   //creating Roles
-   adminId = await createRole("adim")
-   createRole("user")
+   adminId = await createRole("admin")
+   user_Id = await createRole("user")
   
   //creating admin
-  create_admin()
+  create_admin(adminId)
   
 
 

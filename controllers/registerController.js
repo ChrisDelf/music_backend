@@ -13,28 +13,38 @@ const registerNewUser = async (req, res) => {
   try {
     // encrypting the user password
     const hashedPassword = await bcrypt.hash(password, 12)
-    newUser = User.build(
+    tempUser = User.build(
       {
         username: username,
         password: hashedPassword,
       })
 
-    await newUser.save();
+    await tempUser.save();
     const userRole = await Role.findOne(
       {
-        name: "User" 
+        where:{
+        name: "user"
+        }
       })
 
-    newAddRole = AddRole.build(
+    const newAddRole = AddRole.build(
       {
-        userId: newUser.id,
+        userId: tempUser.id,
         roleId: userRole.id
     }
     )
 
     await newAddRole.save()
-
-    res.status(201).json({ 'success': newUser.username }).send()
+   
+    const testUser = await User.findOne(
+      {
+        where:
+      {
+       username: tempUser.username
+      }
+      }
+    )
+    res.status(201).json(testUser).send()
   }
   catch (err) {
     res.status(500).json({ 'message': err.message }).send()

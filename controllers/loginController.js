@@ -11,12 +11,13 @@ const handleLogin = async (req, res) => {
   if (!username || !password) return (res.status(400).json({ 'message': 'Username and password are required' }))
 
   // next we need to see if we can find the user
-  const foundUser = await User.findOne({ username: username })
+  const foundUser = await User.findOne({where: { username: username }})
   if (!foundUser) return (res.status(400).json({ 'message': 'User was not found' }))
 
   // comparing the passwords 
   const match = await bcrypt.compare(password, foundUser.password)
   if (match) {
+
     // if we have match we want to create an access token
     // the accessToken is stored in memory. It is also short lived
     const accessToken = jwt.sign(
@@ -28,7 +29,7 @@ const handleLogin = async (req, res) => {
     )
     // Creationg of the refreshToken
     // this token if active for a longer period of time
-    const refreshToken =  jwt.sign(
+    const refreshToken = jwt.sign(
       {
         "username": foundUser.username
       },
@@ -39,16 +40,17 @@ const handleLogin = async (req, res) => {
     // this is going to be stored in our data base
     foundUser.refreshToken = refreshToken
     await foundUser.save();
-    
+
     // next we will store the refreshToken as a cookie
     // its should be safe since javascript cannot access
-    res.cookie('jwt', refreshToken, {http: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000});
+    res.cookie('jwt', refreshToken, { http: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000 });
     // next we send the accessToken as json
-    res.json({accessToken})
+    res.json({ accessToken })
   }
   else {
-    if(!match){ 
-    res.status(400).json({ 'message': 'incorrect password' })
+    if (!match) {
+      console.log("PPPOOOPERS")
+      res.status(400).json({ 'message': 'incorrect password' })
     }
     res.sendStatus(401)
   }
