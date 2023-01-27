@@ -1,8 +1,13 @@
 const User = require('../models/User')
 const Like = require('../models/Like')
+const AddRole = require('../models/AddRole')
 
 const getAllUsers = async (req, res) => {
-  const Users = await User.findAll()
+  const Users = await User.findAll(
+    {
+      include: AddRole
+    }
+  )
 
   res.status(201).json({ 'success': Users })
 }
