@@ -1,6 +1,6 @@
 const User = require('../models/User')
 const bcrypt = require('bcrypt');
-
+const AddRole = require('../models/AddRole')
 
 const jwt = require('jsonwebtoken')
 require('dotenv').config();
@@ -11,18 +11,29 @@ const handleLogin = async (req, res) => {
   if (!username || !password) return (res.status(400).json({ 'message': 'Username and password are required' }))
 
   // next we need to see if we can find the user
-  const foundUser = await User.findOne({where: { username: username }})
+  const foundUser = await User.findOne({ where: { username: username },include: AddRole })
   if (!foundUser) return (res.status(400).json({ 'message': 'User was not found' }))
 
   // comparing the passwords 
   const match = await bcrypt.compare(password, foundUser.password)
   if (match) {
-
+    /* console.log(foundUser.addRoles[0]) */
+    // going to gather all of the user's roles
+    const temp_roles = foundUser.addRoles
+    let roles =[]
+    temp_roles.forEach(r => {
+      roles.push(r.dataValues.roleId)
+      })
+  
     // if we have match we want to create an access token
     // the accessToken is stored in memory. It is also short lived
     const accessToken = jwt.sign(
       {
-        "username": foundUser.username
+        "UserInfo": 
+        {
+          "username": foundUser.username,
+          "roles": roles
+        }
       },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: '300s' }
@@ -31,7 +42,11 @@ const handleLogin = async (req, res) => {
     // this token if active for a longer period of time
     const refreshToken = jwt.sign(
       {
-        "username": foundUser.username
+        "UserInfo": 
+        {
+          "username": foundUser.username,
+          "roles": roles
+        }
       },
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: '1d' }
@@ -45,7 +60,7 @@ const handleLogin = async (req, res) => {
     // its should be safe since javascript cannot access
     res.cookie('jwt', refreshToken, { http: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000 });
     // next we send the accessToken as json
-    res.json({ accessToken })
+    res.json({accessToken})
   }
   else {
     if (!match) {

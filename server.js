@@ -33,10 +33,11 @@ initDB()
 app.use('/auth', require('./routes/auth'))
 app.use('/register', require('./routes/register_user'))
 app.use('/refresh', require('./routes/refresh'))
-app.use('/user', require('./routes/user.js'))
+
 app.use('/role', require('./routes/role.js'))
 // the links below will be restricted 
 app.use(verifyJWT)
+app.use('/user', require('./routes/user.js'))
 app.use('/logout', require('./routes/logout'))
 app.use('/playlist', require('./routes/api/playlist'))
 app.use('/song', require('./routes/api/song'))
