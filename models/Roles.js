@@ -10,7 +10,7 @@ const Role = sequelize.define('role',
     id:
     {
       type: Sequelize.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      defaultValue: DataTypes.UUID,
       allowNull: false,
       primaryKey: true
     }
