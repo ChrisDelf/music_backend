@@ -14,7 +14,7 @@ const addRole = sequelize.define('addRole',
 
     roleId:
     {
-      type: Sequelize.UUIDV4,
+      type: Sequelize.UUID,
      
     }
 

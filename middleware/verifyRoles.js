@@ -1,40 +1,66 @@
 const Role = require('../models/Roles');
 const uuid = require('uuid');
+const testRoles = require('./test.js')
 
 const verifyRoles = (allowedRoles) => {
+  let result = false
+ 
   return (req, res, next) => {
-
-    if (!req?.roles) return res.sendStatus(401);
-    const rolesArray = allowedRoles;
-    let reqRoles = []
-    new Promise(function(res, error) {
-      req.roles.forEach((role) => {
-        let temp_role =  Role.findOne(
-          {
-            where:
+    var first = function() {
+      return new Promise(function(reslove) {
+        
+        if (!req?.roles) return res.sendStatus(401);
+        req.roles.forEach(async (role) => {
+          console.log(result)
+          let temp_role = await Role.findOne(
             {
-              id: uuid.v4(role)
+              where:
+              {
+                id: role
+              }
+            })
+
+          allowedRoles.forEach((allowed_role) => {
+            console.log(allowed_role, temp_role.dataValues.name)
+
+            if (allowed_role == temp_role.dataValues.name) {
+
+              result = true
+
+            }
+            else
+            {
+              result = false
             }
           })
-        console.log("role", temp_role)
-        reqRoles.push(role)
+         
+          reslove()
+        })
+      })
 
+    }
+
+    var second = function() {
+      return new Promise(function(reslove) {
+       
+
+      if (!result)
+        {
+          return res.sendStatus(401)
+        }
+        else
+        {
+        next()
+        reslove()
+        }
       })
-     
-    })
-      .then((res) => {
-        console.log("req",reqRoles)
-        console.log("rolesArray", rolesArray)
-        const result = req.roles.map(role => rolesArray.includes(role).find(val => val === true));
-        if (result == null) return res.sendStatus(401)
-      })
-      .catch((error) =>{
-        console.log("Failed")
-        
-      })
-    /* if (!result) return res.sendStatus(401) */
-    next();
+    }
+
+    first().then(second)
+
   }
+
 }
+
 
 module.exports = verifyRoles

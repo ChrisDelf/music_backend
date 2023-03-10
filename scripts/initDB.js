@@ -38,7 +38,7 @@ try{
 
   await sequelize.authenticate();
   //creating tables
-  await User.sync({ force: true }); 
+  await User.sync({ force: true });
   await Like.sync({force:true});
   await Song.sync({force:true});
   await AddSong.sync({force:true});
@@ -70,15 +70,16 @@ try{
   //creating Roles
    adminId = await createRole("admin")
    user_Id = await createRole("user")
-  
+
   //creating admin
   create_admin(adminId)
   
-
+ 
 
 } 
 catch (error)
 {
+  console.log(error)
   console.log("Failed database connection")
 }
 }
