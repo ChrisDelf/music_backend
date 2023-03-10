@@ -15,7 +15,7 @@ const sequelize = new Sequelize(db_name, db_user, password,
     host,
     dialect: 'postgres',
     logging: true
-});
+  });
 module.exports = sequelize
 
 
