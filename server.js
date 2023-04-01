@@ -38,12 +38,13 @@ app.use('/refresh', require('./routes/refresh'))
 
 app.use('/role', require('./routes/role.js'))
 
+
 // the links below will be restricted 
 app.use(verifyJWT)
+app.use('/addSong',require('./routes/api/addSong'))
 app.use('/song', require('./routes/api/song'))
 app.use('/user', require('./routes/user.js'))
 app.use('/logout', require('./routes/logout'))
 app.use('/playlist', require('./routes/api/playlist'))
 app.use('/like', require('./routes/api/like'))
-app.use('/addSong',require('./routes/api/addSong'))
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
