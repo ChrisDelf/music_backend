@@ -5,27 +5,89 @@ const crypto = require('crypto');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
+const jsmediatags = require("jsmediatags");
 
 const Song = require('../models/Song')
 
-
-const createSong = async (name, fileName, genre, artist) => {
-  newSong = Song.build(
-    {
-      name: name,
-      fileName: fileName,
-      genre: genre,
-      artist: artist
+const duplicateCheck = (data) => {
+  
+  return new Promise(async (resolve, reject) => {
+    let filename = data
+    if (typeof data === "object") {
+      filename = data.tags.title + ".mp3"
     }
-  )
-  await newSong.save()
+    else {
+      filename = data
+    }
+
+    try {
+
+      const newSong = await Song.findOne({
+        where: { fileName: filename }
+      })
+
+      if (!newSong) {
+        resolve(data)
+      }
+    }
+    catch (error) {
+      reject(error)
+    }
+
+  })
+
+}
+const createSong = (data) => {
+  
+  return new Promise(async (resolve, reject) => {
+    // going to need a check to make sure that we are not adding dublicate song into our data base
+
+    let tempData = ""
+    if (typeof data === "object") {
+
+      tempData =
+      {
+        name: data.tags.title,
+        fileName: data.tags.title + ".mp3",
+        artist: data.tags.artist
+      }
+
+    }
+    else {
+      let titleName = data.split("[")[0]
+     
+      tempData =
+      {
+        name: titleName,
+        fileName: data,
+        grene: "unknown",
+        artist: "unknown"
+      }
+
+
+    }
+    newSong = Song.build(
+      {
+        name: tempData.name,
+        fileName: tempData.fileName,
+        genre: tempData.genre,
+        artist: tempData.artist
+      }
+    )
+
+    await newSong.save()
+    resolve()
+  })
 }
 
 const createFile = (data) => {
-  return new Promise((resolve, reject) => {
-        data.forEach(song => {
+  console.log("CREEEATTTING FIIILELLELE", data)
+  let song = data
+  return new Promise(async (resolve, reject) => {
 
-      exec(`yt-dlp ${song.webpage_url}`, { cwd: './music/' }, (error, stdout, stderr) => {
+
+    exec(`yt-dlp ${song.webpage_url}`, { cwd: './music/' }, (error, stdout, stderr) => {
+      try {
         if (error) {
           console.log(`error: ${error.message}`);
           return;
@@ -34,47 +96,105 @@ const createFile = (data) => {
           console.log(`stderr: ${stderr}`);
           return;
         }
+
+        const result = stdout.match(/\has already been downloaded\b/)
+
         exec(`yt-dlp --get-filename ${song.webpage_url}`, { cwd: './music/' }, (error, stdout, stderr) => {
-        if (error) {
-          console.log(`error: ${error.message}`);
-          return;
-        }
-        if (stderr) {
-          console.log(`stderr: ${stderr}`);
-          return;
+          if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+          }
+          if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+          }
+          data.tempFileName = stdout.split("\n")[0]
+          resolve(data)
+        })
+        
+        if (result !== null) {
+          if (result[0] === "has already been downloaded") {
+            throw new Error("Song has already been downloaded")
+          }
         }
 
-        song.tempFileName = stdout.split("\n")[0]
-        resolve(song)
-      })
-      })
-    
+
+      }
+      catch (error) {
+
+        reject(error)
+      }
     })
-
 
   })
 }
 
-const useIdntag = (data) => {
-  return new Promise((resolve, reject) => {
-    /*  let tempFileName = fileName + ".mp3" */
-    console.log("hello", data)
-    resolve(console.log("hello"))
 
-    // exec(`idntag ${tempFileName}`, { cwd: './music/' }, (error, stdout, stderr) => {
-    //   if (error) {
-    //     console.log(`error: ${error.message}`);
-    //     return;
-    //   }
-    //   if (stderr) {
-    //     console.log(`stderr: ${stderr}`);
-    //     return;
-    //   }
-    //
-    // resolve(stdout) 
-    // })
+const useIdntag = (data) => {
+
+  return new Promise((resolve, reject) => {
+
+    let result = ""
+    exec(`idntag "${data.tempFileName}"`, { cwd: './music/' }, (error, stdout, stderr) => {
+      try {
+        if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+        }
+        if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+        }
+     
+        result = stdout.split('/music/')
+        resolve(result)
+      }
+      catch
+      {
+        console.log("idntag error")
+      }
+    }
+
+    )
 
   })
+
+}
+
+const jsmediaTagsCheck = data => {
+ 
+  return new Promise((resolve, reject) => {
+    let filename = ""
+    
+    if (data.length < 3) {
+      filename = data[1].slice(0, -27)
+
+    }
+    else {
+      filename = data[2].slice(0, -1)
+    }
+
+    const fullPath = path.resolve(__dirname, '..', 'music', filename)
+    let result = ""
+
+    jsmediatags.read(fullPath, {
+      onSuccess: function(tag) {
+        result = tag
+        console.log("TAG: ", tag)
+      },
+
+      onError: function(error) {
+        console.log(error.type, error.info)
+      }
+    })
+    if (typeof result === "object") {
+      resolve(result)
+    }
+    else {
+      resolve(filename)
+    }
+  })
+
 
 }
 
@@ -82,39 +202,45 @@ const useIdntag = (data) => {
 
 
 const soundcloudDownload = async (link, length) => {
-  // we can get the 
-  // thumbnail
-  // extractor
-  // fulltitle
-  // playlist 
-  // webpage_url
+  // going to see what type of information we are receiving
+
+
+
 
   return new Promise((resolve, reject) => {
+    let tempSong = {}
     exec(`yt-dlp --dump-json ${link}`, { cwd: './music/' }, (error, stdout, stderr) => {
-      if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-      }
-      const result = stdout.split("\n")
-      const webLinkArray = []
-      result.slice(0, (length - 1)).forEach(song => {
-        let tempData = JSON.parse(song)
 
 
-        let tempSong = {
+      try {
+        if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+        }
+        if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+        }
+
+        const result = stdout.split("\n")
+
+
+        let tempData = JSON.parse(result[0])
+
+
+        tempSong = {
           name: tempData.fulltitle,
           webpage_url: tempData.webpage_url
         }
-        webLinkArray.push(tempSong)
+        
+        resolve(tempSong)
+      }
+      catch
+      {
 
-      })
-
-      resolve(webLinkArray)
+      }
     });
+
   })
 
 
@@ -173,30 +299,35 @@ const downLoadSong = async (body) => {
       console.log(`stderr: ${stderr}`);
       return;
     }
+   
     resArray = stdout.split(".mp3")
+
+    // next we want to know where the link is coming from
+    // we have to read the link
+    let linkSource = link.split("/", 3)
+
+    if (linkSource[2] == "youtube.com") {
+      youtubeDownload(link)
+    }
+    if (linkSource[2] == "soundcloud.com") {
+      // grab some of the information from the links and send back an array of the information we find
+      soundcloudDownload(link, resArray.length)
+        // now we download the song
+        .then(createFile)
+        // now we want to use Idntag to double check if our information matches up
+        .then(useIdntag)
+        // using jsmediatags to grab the information from the mp3 file
+        .then(jsmediaTagsCheck)
+        //before we add another song we need to check for dups
+        .then(duplicateCheck)
+        // now create the songs in our dataBase
+        .then(createSong).catch(error => { console.error(error) })
+
+
+    }
   })
 
-  // next we want to know where the link is coming from
-  // we have to read the link
-  let linkSource = link.split("/", 3)
 
-  if (linkSource[2] == "youtube.com") {
-    youtubeDownload(link)
-  }
-  if (linkSource[2] == "soundcloud.com") {
-
-    // grab some of the information from the links and send back an array of the information we find
-    soundcloudDownload(link, resArray.length)
-      // //   // now we download the song
-      .then(createFile)
-      // //   // now we want to use Idntag to double check if our information matches up
-      .then(useIdntag)
-    // // // now create the songs in our dataBase
-    //
-
-
-
-  }
 
 
 
