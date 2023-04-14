@@ -10,7 +10,7 @@ const jsmediatags = require("jsmediatags");
 const Song = require('../models/Song')
 
 const duplicateCheck = (data) => {
-  
+
   return new Promise(async (resolve, reject) => {
     let filename = data
     if (typeof data === "object") {
@@ -38,13 +38,13 @@ const duplicateCheck = (data) => {
 
 }
 const createSong = (data) => {
-  
+
   return new Promise(async (resolve, reject) => {
     // going to need a check to make sure that we are not adding dublicate song into our data base
-
+    console.log(typeof data)
     let tempData = ""
     if (typeof data === "object") {
-
+      console.log("TAGS")
       tempData =
       {
         name: data.tags.title,
@@ -55,7 +55,7 @@ const createSong = (data) => {
     }
     else {
       let titleName = data.split("[")[0]
-     
+
       tempData =
       {
         name: titleName,
@@ -111,7 +111,7 @@ const createFile = (data) => {
           data.tempFileName = stdout.split("\n")[0]
           resolve(data)
         })
-        
+
         if (result !== null) {
           if (result[0] === "has already been downloaded") {
             throw new Error("Song has already been downloaded")
@@ -145,7 +145,7 @@ const useIdntag = (data) => {
           console.log(`stderr: ${stderr}`);
           return;
         }
-     
+
         result = stdout.split('/music/')
         resolve(result)
       }
@@ -160,12 +160,10 @@ const useIdntag = (data) => {
   })
 
 }
-
-const jsmediaTagsCheck = data => {
- 
+const readTags = async (data) => {
   return new Promise((resolve, reject) => {
     let filename = ""
-    
+
     if (data.length < 3) {
       filename = data[1].slice(0, -27)
 
@@ -175,26 +173,49 @@ const jsmediaTagsCheck = data => {
     }
 
     const fullPath = path.resolve(__dirname, '..', 'music', filename)
-    let result = ""
-
+    console.log("Here is t he path", fullPath)
     jsmediatags.read(fullPath, {
       onSuccess: function(tag) {
+
         result = tag
-        console.log("TAG: ", tag)
+        resolve(tag)
+
       },
 
       onError: function(error) {
         console.log(error.type, error.info)
+        reject(error)
       }
     })
-    if (typeof result === "object") {
-      resolve(result)
-    }
-    else {
-      resolve(filename)
-    }
-  })
 
+
+
+  })
+}
+
+const jsmediaTagsCheck = async (data) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      let filename = ""
+
+      if (data.length < 3) {
+        filename = data[1].slice(0, -27)
+
+      }
+      else {
+        filename = data[2].slice(0, -1)
+      }
+      const tags = await readTags(data)
+      if (tags !== null) {
+        resolve(tags)
+      }
+      else { resolve(filename) }
+    }
+    catch (error) {
+      console.error(error)
+    }
+
+  })
 
 }
 
@@ -202,13 +223,14 @@ const jsmediaTagsCheck = data => {
 
 
 const soundcloudDownload = async (link, length) => {
-  // going to see what type of information we are receiving
-
+  // need to check if this like is a playlist
 
 
 
   return new Promise((resolve, reject) => {
     let tempSong = {}
+
+
     exec(`yt-dlp --dump-json ${link}`, { cwd: './music/' }, (error, stdout, stderr) => {
 
 
@@ -232,7 +254,7 @@ const soundcloudDownload = async (link, length) => {
           name: tempData.fulltitle,
           webpage_url: tempData.webpage_url
         }
-        
+
         resolve(tempSong)
       }
       catch
@@ -282,9 +304,15 @@ const downLoadSong = async (body) => {
   const dateTime = `${format(new Date(), 'yyyyMMdd\tHH:mm:ss')}`;
   const { link, genre, artist } = body
 
+  let playlistCheck = link.match("/sets/")
+
+  if (playlistCheck !== null) {
+    let reponse = "Link was a playlist"
+    return reponse
+  }
+
   // going to check if the folder already exist
   // and if it doesn't then we create one
-
   let resArray = []
 
   if (!fs.existsSync(path.join(__dirname, '..', 'music'))) {
@@ -299,7 +327,7 @@ const downLoadSong = async (body) => {
       console.log(`stderr: ${stderr}`);
       return;
     }
-   
+
     resArray = stdout.split(".mp3")
 
     // next we want to know where the link is coming from
