@@ -1,5 +1,6 @@
 const { format } = require('date-fns');
 const { v4: uuid } = require('uuid');
+const short = require('short-uuid');
 const { exec } = require("child_process");
 const crypto = require('crypto');
 const fs = require('fs');
@@ -9,15 +10,48 @@ const jsmediatags = require("jsmediatags");
 
 const Song = require('../models/Song')
 
+const addingShortUuid = (data) => {
+  return new Promise(async (resolve, reject) => {
+   
+    // creating the uuid tag that i'm going to add onto the end of the filename
+    const translator = short();
+    const shortUuid = translator.new();
+    const fileName = data.fileName
+    // if there is still a hex on a the filename we will now remove it
+    let newFileName = ""
+    if (data.isFailed === true) {
+      newFileName = fileName.split("[").reverse()[1]
+      
+
+    }
+    else {
+      newFileName = fileName.split(".mp3")[0]
+    }
+    newFileName = newFileName + shortUuid + ".mp3"
+
+   
+    // nex I will rename the file
+    const oldPath = path.resolve(__dirname, '..', 'music', fileName)
+    const newPath = path.resolve(__dirname, '..', 'music', newFileName)
+
+    fs.renameSync(oldPath, newPath)
+    data.fileName = newFileName
+    resolve(data)
+  })
+
+
+}
+
 const duplicateCheck = (data) => {
 
   return new Promise(async (resolve, reject) => {
-    let filename = data
-    if (typeof data === "object") {
+    
+    let filename = data.fileName
+    if (typeof data.tags === "object") {
       filename = data.tags.title + ".mp3"
     }
     else {
-      filename = data
+      filename = data.fileName
     }
 
     try {
@@ -39,27 +73,29 @@ const duplicateCheck = (data) => {
 }
 const createSong = (data) => {
 
+
   return new Promise(async (resolve, reject) => {
     // going to need a check to make sure that we are not adding dublicate song into our data base
-    console.log(typeof data)
+
     let tempData = ""
-    if (typeof data === "object") {
-      console.log("TAGS")
+    if (typeof data.tags === "object") {
+     
       tempData =
       {
-        name: data.tags.title,
-        fileName: data.tags.title + ".mp3",
-        artist: data.tags.artist
+        name: data.tags.tags.title,
+        fileName: data.fileName,
+        artist: data.tags.tags.artist,
       }
 
     }
     else {
-      let titleName = data.split("[")[0]
+
+      let titleName = data.name
 
       tempData =
       {
         name: titleName,
-        fileName: data,
+        fileName: data.fileName,
         grene: "unknown",
         artist: "unknown"
       }
@@ -71,7 +107,8 @@ const createSong = (data) => {
         name: tempData.name,
         fileName: tempData.fileName,
         genre: tempData.genre,
-        artist: tempData.artist
+        artist: tempData.artist,
+        originalLink: data.webpage_url
       }
     )
 
@@ -81,7 +118,7 @@ const createSong = (data) => {
 }
 
 const createFile = (data) => {
-  console.log("CREEEATTTING FIIILELLELE", data)
+ 
   let song = data
   return new Promise(async (resolve, reject) => {
 
@@ -129,9 +166,7 @@ const createFile = (data) => {
   })
 }
 
-
-const useIdntag = (data) => {
-
+const idnTagging = (data) => {
   return new Promise((resolve, reject) => {
 
     let result = ""
@@ -145,12 +180,17 @@ const useIdntag = (data) => {
           console.log(`stderr: ${stderr}`);
           return;
         }
-
         result = stdout.split('/music/')
-        resolve(result)
+        data.isFailed = false
+        data.fileName = result[2].slice(0, -1)
+       
+        resolve(data)
       }
       catch
       {
+        data.fileName = data.tempFileName
+        data.isFailed = true
+        resolve(data)
         console.log("idntag error")
       }
     }
@@ -158,22 +198,24 @@ const useIdntag = (data) => {
     )
 
   })
+}
+const useIdntag = (data) => {
+
+  return new Promise(async (resolve, reject) => {
+    data = await (idnTagging(data))
+   
+    resolve(data)
+  })
 
 }
 const readTags = async (data) => {
+
   return new Promise((resolve, reject) => {
-    let filename = ""
+    let filename = data
 
-    if (data.length < 3) {
-      filename = data[1].slice(0, -27)
-
-    }
-    else {
-      filename = data[2].slice(0, -1)
-    }
 
     const fullPath = path.resolve(__dirname, '..', 'music', filename)
-    console.log("Here is t he path", fullPath)
+
     jsmediatags.read(fullPath, {
       onSuccess: function(tag) {
 
@@ -187,29 +229,25 @@ const readTags = async (data) => {
         reject(error)
       }
     })
-
+    resolve()
 
 
   })
 }
 
 const jsmediaTagsCheck = async (data) => {
-  return new Promise(async(resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
-      let filename = ""
 
-      if (data.length < 3) {
-        filename = data[1].slice(0, -27)
-
+      const tags = await readTags(data.fileName)
+      if (tags !== null) {
+        data.tags = tags
+        resolve(data)
       }
       else {
-        filename = data[2].slice(0, -1)
+        console.log("NO TAGS", data)
+        resolve(data)
       }
-      const tags = await readTags(data)
-      if (tags !== null) {
-        resolve(tags)
-      }
-      else { resolve(filename) }
     }
     catch (error) {
       console.error(error)
@@ -254,6 +292,7 @@ const soundcloudDownload = async (link, length) => {
           name: tempData.fulltitle,
           webpage_url: tempData.webpage_url
         }
+
 
         resolve(tempSong)
       }
@@ -307,8 +346,18 @@ const downLoadSong = async (body) => {
   let playlistCheck = link.match("/sets/")
 
   if (playlistCheck !== null) {
-    let reponse = "Link was a playlist"
-    return reponse
+
+    let response = "Link was a playlist"
+    return response
+  }
+  // going to check if the song list was already downloaded using the same link
+  const newSong = await Song.findOne({
+    where: { originalLink: link }
+  })
+ 
+  if (newSong !== null) {
+    let response = "Link has already been downloaded"
+    return response
   }
 
   // going to check if the folder already exist
@@ -337,6 +386,7 @@ const downLoadSong = async (body) => {
     if (linkSource[2] == "youtube.com") {
       youtubeDownload(link)
     }
+    console.log("Download link", link)
     if (linkSource[2] == "soundcloud.com") {
       // grab some of the information from the links and send back an array of the information we find
       soundcloudDownload(link, resArray.length)
@@ -344,10 +394,11 @@ const downLoadSong = async (body) => {
         .then(createFile)
         // now we want to use Idntag to double check if our information matches up
         .then(useIdntag)
+        // going to add our own identifier
+        .then(addingShortUuid)
         // using jsmediatags to grab the information from the mp3 file
         .then(jsmediaTagsCheck)
-        //before we add another song we need to check for dups
-        .then(duplicateCheck)
+
         // now create the songs in our dataBase
         .then(createSong).catch(error => { console.error(error) })
 
