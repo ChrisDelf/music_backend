@@ -7,12 +7,12 @@ const Song = sequelize.define('song',
     name:
     {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: true
     },
     fileName:
     {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: true
     },
     genre:
     {
@@ -24,10 +24,15 @@ const Song = sequelize.define('song',
       type: DataTypes.STRING,
       allowNull: true
     },
-    originalLink:
+    link:
     {
     type: DataTypes.STRING,
       allowNull: false
+    },
+    status:
+    {
+      type: DataTypes.STRING,
+      allowNull: true
     }
 
   })
