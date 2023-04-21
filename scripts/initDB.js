@@ -7,6 +7,10 @@ const Role = require('../models/Roles')
 const AddRole = require('../models/AddRole.js')
 
 
+
+
+
+
 const bcrypt = require('bcrypt');
 const createRole = require('../scripts/creatingRoles.js')
 const sequelize = require('../config/sequelize')
@@ -34,6 +38,7 @@ const admin_user = User.build(
 }
 
 const initDB = async() => {
+
 try{
 
   await sequelize.authenticate();
@@ -45,6 +50,7 @@ try{
   await SongList.sync({force:true});
   await Role.sync({force:true})
   await AddRole.sync({force:true})
+ 
   //creating relationships
   // Like Song User Related
   User.hasMany(Like)
@@ -73,6 +79,7 @@ try{
 
   //creating admin
   create_admin(adminId)
+
   
  
 

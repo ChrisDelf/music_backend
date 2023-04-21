@@ -2,15 +2,37 @@ const Song = require('../models/Song')
 const downLoadSong = require('../scripts/downLoadSong.js')
 const songStream = require('../scripts/songStream')
 const express = require('express');
+const fs = require('fs')
 const path = require('path');
 
+
 const uploadSong = async (req, res) => {
-  // deconstructing the resquest body
+  // downLoadSong.downLoadSong(req.body)
+  // before we start a job queue we want to make sure we are not duplicating jobs with the same links
+  const checkJob = await Song.findOne({
+    where:{
+      link: req.body.link
+    }
+  })
 
+  if (checkJob !== null)
+  {
+    res.status(400).json({'message':"This song is already in the job queue"})
+  }
+  else
+  // going add a song to my postgres database
+  {
+  let newJob = Song.build(
+    {
+      link: req.body.link,
+      status: "unfinished"
+    }
+  )
 
-  downLoadSong.downLoadSong(req.body)
-  res.status(201).json({ 'success': "song has been uploaded" })
+  await newJob.save()
 
+  res.status(201).json({ 'success': "Job has been sent wait for it to download"})
+  }
 }
 const selectSong = async (req, res) => {
   // checking if request is compatible
