@@ -10,28 +10,27 @@ const uploadSong = async (req, res) => {
   // downLoadSong.downLoadSong(req.body)
   // before we start a job queue we want to make sure we are not duplicating jobs with the same links
   const checkJob = await Song.findOne({
-    where:{
+    where: {
       link: req.body.link
     }
   })
 
-  if (checkJob !== null)
-  {
-    res.status(400).json({'message':"This song is already in the job queue"})
+  if (checkJob !== null) {
+    res.status(400).json({ 'message': "This song is already in the job queue" })
   }
   else
   // going add a song to my postgres database
   {
-  let newJob = Song.build(
-    {
-      link: req.body.link,
-      status: "unfinished"
-    }
-  )
+    let newJob = Song.build(
+      {
+        link: req.body.link,
+        status: "unfinished"
+      }
+    )
 
-  await newJob.save()
+    await newJob.save()
 
-  res.status(201).json({ 'success': "Job has been sent wait for it to download"})
+    res.status(201).json({ 'success': "Job has been sent wait for it to download" })
   }
 }
 const selectSong = async (req, res) => {
@@ -46,7 +45,18 @@ const selectSong = async (req, res) => {
 const getAllSongs = async (req, res) => {
   const Songs = await (Song.findAll())
 
-  res.status(201).json({ 'success': Songs })
+  res.status(201).json({ 'success': Songs})
+}
+
+// going to check the song's table to see which songs are still in queue to download
+const getAllJobs = async (req, res) => {
+  const Jobs = await Song.findAll({
+    where: {
+      status: "In progress"
+    }
+  }
+  )
+  res.status(201).json({ 'success': Jobs })
 }
 
 const playSong = async (req, res) => {
@@ -78,8 +88,8 @@ const sendSongFile = async (req, res) => {
   var filePath = path.join(__dirname, "../", "music/", `${song.fileName}.mp3`)
   console.log(filePath)
 
-    res.status(200).download(filePath)
+  res.status(200).download(filePath)
 
 }
 
-module.exports = { uploadSong, selectSong, getAllSongs, playSong, sendSongFile }
+module.exports = { uploadSong, selectSong, getAllSongs, playSong, sendSongFile, getAllJobs }
