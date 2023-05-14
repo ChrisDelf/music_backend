@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express')
 const app = express();
 const cors = require('cors');
+const http = require('http');
 const sequelize = require('./config/sequelize')
 /* const {logger} = require('./middleWare/logEvents') */
 /* const connectDB = require('./config/connectDB') */
@@ -10,7 +11,9 @@ const verifyJWT = require('./middleware/verifyJWT')
 const credentials = require('./middleware/credentials.js');
 const corsOptions = require('./config/corsOptions')
 const initDB = require('./scripts/initDB')
+const socketio = require('socket.io');
 const PORT = process.env.PORT || 3500;
+
 
 // Handle options credentials check - before CORS!
 // and fetch cookies credentials requirement
@@ -38,12 +41,39 @@ app.use('/role', require('./routes/role.js'))
 
 
 // the links below will be restricted 
-app.use(verifyJWT)
-app.use('/addSong',require('./routes/api/addSong'))
+/* app.use(verifyJWT) */
+app.use('/addSong', require('./routes/api/addSong'))
 
 app.use('/user', require('./routes/user.js'))
 app.use('/logout', require('./routes/logout'))
 app.use('/playlist', require('./routes/api/playlist'))
 app.use('/like', require('./routes/api/like'))
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// initializing socketio
+const io = require('socket.io')(server, {
+ cors: {
+    origin: '*',
+  },
+  allowRequest: (req, callback) => {
+    if (req.headers.origin === 'http://localhost:3000') {
+      callback(null, true);
+    } else {
+      callback(new Error('Invalid origin'));
+    }
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+
+  socket.on('chat message', (msg) => {
+    console.log('message: ' + msg);
+    io.emit('chat message', msg);
+  });
+});
