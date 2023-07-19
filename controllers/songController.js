@@ -92,4 +92,9 @@ const sendSongFile = async (req, res) => {
 
 }
 
+// const streamSongList = async (req, res) =>
+//   {
+    
+//   }
+
 module.exports = { uploadSong, selectSong, getAllSongs, playSong, sendSongFile, getAllJobs }

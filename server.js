@@ -11,6 +11,7 @@ const verifyJWT = require('./middleware/verifyJWT')
 const credentials = require('./middleware/credentials.js');
 const corsOptions = require('./config/corsOptions')
 const initDB = require('./scripts/initDB')
+const socketScript = require('./scripts/socketScript')
 const socketio = require('socket.io');
 const PORT = process.env.PORT || 3500;
 
@@ -65,9 +66,11 @@ const io = require('socket.io')(server, {
   }
 });
 
+// testing socket.io 
+
 io.on('connection', (socket) => {
   console.log('A user connected');
-
+  socketScript.jobsStream(io)
   socket.on('disconnect', () => {
     console.log('A user disconnected');
   });
