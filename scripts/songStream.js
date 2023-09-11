@@ -2,7 +2,7 @@ var fs = require('fs');
 
 
 const songStream = (fileName, range, res) => {
-var music = `./music/${fileName}.mp3`; // filepath
+var music = `./music/${fileName}`; // filepath
 var stat = fs.statSync(music);
 var readStream;
 // if there is no request about range
