@@ -38,7 +38,6 @@ const admin_user = User.build(
 }
 
 const initDB = async() => {
-
 try{
 
   await sequelize.authenticate();
@@ -76,7 +75,7 @@ try{
   //creating Roles
    adminId = await createRole("admin")
    user_Id = await createRole("user")
-
+  
   //creating admin
   create_admin(adminId)
 
