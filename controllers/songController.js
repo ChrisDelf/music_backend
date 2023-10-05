@@ -58,11 +58,13 @@ const getAllJobs = async (req, res) => {
 };
 
 const playSong = async (req, res) => {
+  if (req.params.id === undefined) {
+    return res.status(400).json({ message: "Song ID is required" });
+  }
   // going first we need to see if the id: is valid
   if (!req?.params?.id)
     return res.status(400).json({ message: "Song ID is required" });
   // next is to locate the song in our database
-    console.log(req)
   const song = await Song.findOne({ where: { id: req.params.id } });
 
   if (!song) {
@@ -79,23 +81,23 @@ const sendSongFile = async (req, res) => {
   // going first we need to see if the id: is valid
   if (!req?.params?.id)
     return res.status(400).json({ message: "Song ID is required" });
-  const song = await Song.findOne({ id: req.params.id });
-
-  // if (!song) {
-  //   res.status(400).json({ 'message': `Song by the id ${req.params.id} was not found` })
-  //
-  // }
+  const song = await Song.findOne({ where: { id: req.params.id } });
+  const fileName = song.fileName
+  console.log(fileName)
   /*  going to grab the file now */
-  var filePath = path.join(__dirname, "../", "music/", `${song.fileName}.mp3`);
-  console.log(filePath);
+  var filePath = path.join(__dirname, "../", "music/", `${fileName}`);
+// Set the appropriate headers for MP3 file download
+  res.setHeader('Content-Disposition', 'attachment; filename=downloadedAudio.mp3');
+  res.setHeader('Content-Type', 'audio/mpeg');
 
-  res.status(200).download(filePath);
-};
-
-// const streamSongList = async (req, res) =>
-//   {
-
-//   }
+  // Send the MP3 file to the client
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error sending MP3 file:', err);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+}
 
 module.exports = {
   uploadSong,
