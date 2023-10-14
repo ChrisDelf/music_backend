@@ -62,15 +62,20 @@ const io = new Server(httpServer, { cors: { origin: "*" } });
 io.on("connection", (socket) => {
   console.log("A user connected");
 
-  // Listen for incoming messages from the client
+  // socket for the chat box
   socket.on("message", (message) => {
     // Broadcast the message to all connected clients
-    console.log(message)
-    // io.emit("message", { ...message, sender: "server" });
+    io.emit("message", { ...message, sender: "server" });
   });
+  // socket to let user know the status of songs
+  socketScript.jobsStream(io);
 
   socket.on("disconnect", () => {
     console.log("User disconnected");
+  });
+  socket.on("song-finished", (newSong) => {
+    console.log("song finished", newSong);
+    io.emit("song-finished", {newSong, sender:"server"})
   });
 });
 httpServer.listen(3000);

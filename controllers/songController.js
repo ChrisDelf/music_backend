@@ -51,7 +51,7 @@ const getAllSongs = async (req, res) => {
 const getAllJobs = async (req, res) => {
   const Jobs = await Song.findAll({
     where: {
-      status: "In progress",
+      status: "unfinished",
     },
   });
   res.status(201).json({ success: Jobs });
