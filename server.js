@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const http = require("http");
 const sequelize = require("./config/sequelize");
 /* const {logger} = require('./middleWare/logEvents') */
 /* const connectDB = require('./config/connectDB') */
@@ -12,7 +11,10 @@ const credentials = require("./middleware/credentials.js");
 const corsOptions = require("./config/corsOptions");
 const initDB = require("./scripts/initDB");
 const socketScript = require("./scripts/socketScript");
-const socketio = require("socket.io");
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const { join } = require("node:path");
+
 const PORT = process.env.PORT || 3500;
 
 // Handle options credentials check - before CORS!
@@ -47,43 +49,33 @@ app.use("/user", require("./routes/user.js"));
 app.use("/logout", require("./routes/logout"));
 app.use("/playlist", require("./routes/api/playlist"));
 app.use("/like", require("./routes/api/like"));
-
+app.get("/", (req, res) => {
+  res.sendFile(join(__dirname, "index.html"));
+});
 const server = app.listen(PORT, () =>
   console.log(`Server running on port ${PORT}`),
 );
 
-// initializing socketio
-const io = require("socket.io")(server, {
-  cors: {
-    origin: "*",
-  },
-  allowRequest: (req, callback) => {
-    if (req.headers.origin === "http://localhost:3000") {
-      callback(null, true);
-    } else {
-      callback(new Error("Invalid origin"));
-    }
-  },
-});
-
-// testing socket.io
+const httpServer = createServer(app);
+const io = new Server(httpServer, { cors: { origin: "*" } });
 
 io.on("connection", (socket) => {
   console.log("A user connected");
+
+  // socket for the chat box
+  socket.on("message", (message) => {
+    // Broadcast the message to all connected clients
+    io.emit("message", { ...message, sender: "server" });
+  });
+  // socket to let user know the status of songs
   socketScript.jobsStream(io);
+
   socket.on("disconnect", () => {
-    console.log("A user disconnected");
+    console.log("User disconnected");
   });
-
-  socket.on("chat message", (msg) => {
-    console.log("message: " + msg);
-    io.emit("chat message", msg);
-  });
-  // Listen for the 'song-finished' event from the song downloader
-  socket.on("song-finished", (songData) => {
-    console.log(`Song download finished: ${JSON.stringify(songData)}`);
-
-    // Now emit this event to all connected web app clients
-    io.emit("song-finished", songData);
+  socket.on("song-finished", (newSong) => {
+    console.log("song finished", newSong);
+    io.emit("song-finished", {newSong, sender:"server"})
   });
 });
+httpServer.listen(3000);

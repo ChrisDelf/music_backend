@@ -11,9 +11,10 @@ const jobsStream = async(io) => {
   }
     })
 
-    io.emit('unfinishedJobs', jobs )
-  console.log(jobs)
+    io.emit('unfinished-jobs', jobs )
+  console.log("Jobs queued", jobs)
 }
+
 
 
 
