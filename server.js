@@ -67,15 +67,15 @@ io.on("connection", (socket) => {
     // Broadcast the message to all connected clients
     io.emit("message", { ...message, sender: "server" });
   });
-  // socket to let user know the status of songs
-  socketScript.jobsStream(io);
-
+  // socket to let user know the status of songa
+  socket.on("unfinished-jobs", () => {
+    socketScript.jobsStream(io);
+  });
   socket.on("disconnect", () => {
     console.log("User disconnected");
   });
-  socket.on("song-finished", (newSong) => {
-    console.log("song finished", newSong);
-    io.emit("song-finished", {newSong, sender:"server"})
+  socket.on("song-finished", () => {
+    socketScript.jobsFinished(io);
   });
 });
 httpServer.listen(3000);
