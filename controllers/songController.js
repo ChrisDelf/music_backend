@@ -1,6 +1,7 @@
 const Song = require("../models/Song");
 const downLoadSong = require("../scripts/downLoadSong.js");
 const songStream = require("../scripts/songStream");
+const { Sequelize } = require('sequelize');
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -36,7 +37,7 @@ const selectSong = async (req, res) => {
   if (!req?.params?.id)
     return res.status(400).json({ message: "Song ID is required" });
   // next we need to check if the song id is in our database
-  const song = await Song.findOne({ where: {id: req.params.id }});
+  const song = await Song.findOne({ where: { id: req.params.id } });
 
   res.json(song);
 };
@@ -81,32 +82,58 @@ const sendSongFile = async (req, res) => {
   if (!req?.params?.id)
     return res.status(400).json({ message: "Song ID is required" });
   const song = await Song.findOne({ where: { id: req.params.id } });
-   if (!song) {
+  if (!song) {
     res
       .status(400)
       .json({ message: `Song by the id ${req.params.id} was not found` });
   } else {
+    const fileName = song.fileName;
+    console.log(fileName);
+    /*  going to grab the file now */
+    var filePath = path.join(__dirname, "../", "music/", `${fileName}`);
+    // Set the appropriate headers for MP3 file download
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=downloadedAudio.mp3",
+    );
+    res.setHeader("Content-Type", "audio/mpeg");
 
-  const fileName = song.fileName;
-  console.log(fileName);
-  /*  going to grab the file now */
-  var filePath = path.join(__dirname, "../", "music/", `${fileName}`);
-  // Set the appropriate headers for MP3 file download
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=downloadedAudio.mp3",
-  );
-  res.setHeader("Content-Type", "audio/mpeg");
-
-  // Send the MP3 file to the client
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error("Error sending MP3 file:", err);
-      res.status(500).send("Internal Server Error");
-    }
-  });
+    // Send the MP3 file to the client
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        console.error("Error sending MP3 file:", err);
+        res.status(500).send("Internal Server Error");
+      }
+    });
   }
 };
+
+const searchSong = async (req, res) => {
+  const { name, artist } = req.body;
+  console.log(name)
+  // Sequelize query to find songs based on search criteria
+    try {
+  const matchingSongs = await Song.findAll({
+    where: {
+      name: {
+        [Sequelize.Op.iLike]: `%${name || ""}%`, // Case-insensitive partial match
+      },
+      artist: {
+        [Sequelize.Op.iLike]: `%${artist || ""}%`,
+      },
+    },
+  });
+        res.status(200).json({ songs: matchingSongs });
+    }
+    catch (error)
+    {
+          console.error('Error searching for songs:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+
+    }
+
+};
+
 
 module.exports = {
   uploadSong,
@@ -115,4 +142,5 @@ module.exports = {
   playSong,
   sendSongFile,
   getAllJobs,
+  searchSong,
 };

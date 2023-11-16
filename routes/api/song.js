@@ -15,6 +15,9 @@ router.route('/play/:id')
   .get(songController.playSong)
 router.route('/download/:id')
   .get(songController.sendSongFile)
+router.route('/search/')
+  .post(songController.searchSong)
+
 
 
 module.exports = router
